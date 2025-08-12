@@ -1,9 +1,10 @@
 import * as fs from 'node:fs';
+import * as os from 'node:os';
 import path from 'path';
 import * as vscode from 'vscode';
 
 export function registerChatTools(context: vscode.ExtensionContext) {
-	context.subscriptions.push(vscode.lm.registerTool('ask_follow_up_instructions', new AskFollowupInstructionsTool()));
+	context.subscriptions.push(vscode.lm.registerTool('ask_follow_up_instructions', new AskFollowupInstructionsTool(context)));
 }
 
 interface IFollowUp {
@@ -37,6 +38,12 @@ function waitForFileChange(filePath: string) {
 }
 
 export class AskFollowupInstructionsTool implements vscode.LanguageModelTool<IAskFollowupInstructions> {
+	private context: vscode.ExtensionContext;
+
+	constructor(context: vscode.ExtensionContext) {
+		this.context = context;
+	}
+
 	async invoke(_options: vscode.LanguageModelToolInvocationOptions<IAskFollowupInstructions>,
 		_token: vscode.CancellationToken) {
 		let result = null;
@@ -52,20 +59,38 @@ export class AskFollowupInstructionsTool implements vscode.LanguageModelTool<IAs
 				title: "Enter follow-up instructions. Use file:PATH to specify instructions from path",
 				// value: "instructions or file:PATH"
 			}, _token);
+			let filePath = null;
+			const tempFile = result ? false : true;
 			if (!result) {
-				result = "file:task.md";
+				const tmpFileName = `task-${Date.now()}-${Math.random().toString(36).substring(2, 9)}.md`;
+				result = `file:${path.join(os.tmpdir(), tmpFileName)}`;
 			}
 			if (result.startsWith("file:") || result.startsWith("/")) {
-				const fName = result.replace("file:","");
-				const fPath = path.join(vscode.workspace.rootPath || "", ".tasks", fName);
-				if (!fs.existsSync(fPath)) {
-					fs.writeFileSync(fPath, "## Task description\n");
+				filePath =  result.replace("file:", "");
+				const uri = vscode.Uri.file(filePath);
+				if (!fs.existsSync(filePath)) {
+					// vscode.workspace.fs.writeFile(uri, Buffer.from("## Task description\n"));
+					const defaultSuggestion = _params.follow_up?.map(a=>a.suggest).join("\n") || "";
+					fs.writeFileSync(filePath, `## Task description\n${_params.prompt}\n${defaultSuggestion}`);
 				}
-				const uri = vscode.Uri.file(fPath);
-				vscode.workspace.openTextDocument(uri);
-				await waitForFileChange(fPath);
-				const fileContent = fs.readFileSync(fPath, "utf-8");
-				result = fileContent;
+				try {
+					const document = await vscode.workspace.openTextDocument(uri);
+					const _editor = await vscode.window.showTextDocument(document);
+					await waitForFileChange(filePath);
+					// const fileContent = vscode.workspace.fs.readFile(uri);
+					// vscode.window.tabGroups.close(tabs[index]);
+					const fileContent = fs.readFileSync(filePath, "utf-8");
+					result = fileContent;
+				} finally {
+					// Clean up temporary file
+					if (tempFile && fs.existsSync(filePath)) {
+						try {
+							fs.unlinkSync(filePath);
+						} catch (cleanupError) {
+							console.error(`Failed to delete temporary file: ${cleanupError}`);
+						}
+					}
+				}
 			}
 		} catch (e) {
 			return new vscode.LanguageModelToolResult([new vscode.LanguageModelTextPart((e as Error).message)]);

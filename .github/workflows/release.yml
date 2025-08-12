@@ -23,7 +23,7 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '18'
+        node-version: '22'
         cache: 'npm'
 
     - name: Install dependencies
@@ -69,17 +69,17 @@ jobs:
     - name: Package extension
       if: steps.check-tag.outputs.exists == 'false'
       run: |
-        vsce package --out extension-v${{ steps.package-info.outputs.version }}.vsix
+        vsce package --out ask-instruction-v${{ steps.package-info.outputs.version }}.vsix
 
     - name: Verify VSIX file
       if: steps.check-tag.outputs.exists == 'false'
       run: |
-        if [ ! -f "extension-v${{ steps.package-info.outputs.version }}.vsix" ]; then
+        if [ ! -f "ask-instruction-v${{ steps.package-info.outputs.version }}.vsix" ]; then
           echo "Error: VSIX file was not created"
           exit 1
         fi
-        echo "VSIX file created successfully: extension-v${{ steps.package-info.outputs.version }}.vsix"
-        ls -la extension-v${{ steps.package-info.outputs.version }}.vsix
+        echo "VSIX file created successfully: ask-instruction-v${{ steps.package-info.outputs.version }}.vsix"
+        ls -la ask-instruction-v${{ steps.package-info.outputs.version }}.vsix
 
     - name: Create Git tag
       if: steps.check-tag.outputs.exists == 'false'
@@ -103,7 +103,7 @@ jobs:
 
           ### Changes
           - Built from commit: ${{ github.sha }}
-          - Extension package: `extension-v${{ steps.package-info.outputs.version }}.vsix`
+          - Extension package: `ask-instruction-v${{ steps.package-info.outputs.version }}.vsix`
 
           ### Installation
           1. Download the `.vsix` file from the assets below
@@ -126,8 +126,8 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./extension-v${{ steps.package-info.outputs.version }}.vsix
-        asset_name: extension-v${{ steps.package-info.outputs.version }}.vsix
+        asset_path: ./ask-instruction-v${{ steps.package-info.outputs.version }}.vsix
+        asset_name: ask-instruction-v${{ steps.package-info.outputs.version }}.vsix
         asset_content_type: application/zip
 
     - name: Skip release (tag exists)
