@@ -1,0 +1,137 @@
+name: Release VS Code Extension
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+  packages: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: |
+        npm ci
+
+    - name: Lint code
+      run: |
+        npm run lint
+
+    - name: Compile TypeScript
+      run: |
+        npm run compile
+
+    - name: Install vsce
+      run: |
+        npm install -g @vscode/vsce
+
+    - name: Get package info
+      id: package-info
+      run: |
+        VERSION=$(node -p "require('./package.json').version")
+        DISPLAY_NAME=$(node -p "require('./package.json').displayName")
+        PUBLISHER=$(node -p "require('./package.json').publisher")
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "displayName=$DISPLAY_NAME" >> $GITHUB_OUTPUT
+        echo "publisher=$PUBLISHER" >> $GITHUB_OUTPUT
+        echo "Package version: $VERSION"
+        echo "Display name: $DISPLAY_NAME"
+        echo "Publisher: $PUBLISHER"
+
+    - name: Check if tag exists
+      id: check-tag
+      run: |
+        if git rev-parse "v${{ steps.package-info.outputs.version }}" >/dev/null 2>&1; then
+          echo "exists=true" >> $GITHUB_OUTPUT
+          echo "Tag v${{ steps.package-info.outputs.version }} already exists"
+        else
+          echo "exists=false" >> $GITHUB_OUTPUT
+          echo "Tag v${{ steps.package-info.outputs.version }} does not exist"
+        fi
+
+    - name: Package extension
+      if: steps.check-tag.outputs.exists == 'false'
+      run: |
+        vsce package --out extension-v${{ steps.package-info.outputs.version }}.vsix
+
+    - name: Verify VSIX file
+      if: steps.check-tag.outputs.exists == 'false'
+      run: |
+        if [ ! -f "extension-v${{ steps.package-info.outputs.version }}.vsix" ]; then
+          echo "Error: VSIX file was not created"
+          exit 1
+        fi
+        echo "VSIX file created successfully: extension-v${{ steps.package-info.outputs.version }}.vsix"
+        ls -la extension-v${{ steps.package-info.outputs.version }}.vsix
+
+    - name: Create Git tag
+      if: steps.check-tag.outputs.exists == 'false'
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git tag -a "v${{ steps.package-info.outputs.version }}" -m "Release v${{ steps.package-info.outputs.version }}"
+        git push origin "v${{ steps.package-info.outputs.version }}"
+
+    - name: Create GitHub Release
+      if: steps.check-tag.outputs.exists == 'false'
+      uses: actions/create-release@v1
+      id: create_release
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ steps.package-info.outputs.version }}
+        release_name: Release v${{ steps.package-info.outputs.version }}
+        body: |
+          ## Release v${{ steps.package-info.outputs.version }}
+
+          ### Changes
+          - Built from commit: ${{ github.sha }}
+          - Extension package: `extension-v${{ steps.package-info.outputs.version }}.vsix`
+
+          ### Installation
+          1. Download the `.vsix` file from the assets below
+          2. Open VS Code
+          3. Go to Extensions (Ctrl+Shift+X)
+          4. Click the "..." menu and select "Install from VSIX..."
+          5. Select the downloaded file
+
+          ### Package Information
+          - **Name**: ${{ steps.package-info.outputs.displayName }}
+          - **Version**: ${{ steps.package-info.outputs.version }}
+          - **Publisher**: ${{ steps.package-info.outputs.publisher }}
+        draft: false
+        prerelease: false
+
+    - name: Upload VSIX to Release
+      if: steps.check-tag.outputs.exists == 'false'
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./extension-v${{ steps.package-info.outputs.version }}.vsix
+        asset_name: extension-v${{ steps.package-info.outputs.version }}.vsix
+        asset_content_type: application/zip
+
+    - name: Skip release (tag exists)
+      if: steps.check-tag.outputs.exists == 'true'
+      run: |
+        echo "Skipping release creation because tag v${{ steps.package-info.outputs.version }} already exists"
+        echo "If you want to create a new release, update the version in package.json"

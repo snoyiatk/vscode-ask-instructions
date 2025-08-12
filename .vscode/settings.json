@@ -1,0 +1,18 @@
+{
+    "search.exclude": {
+        "out": true
+    },
+    "git.branchProtection": [
+        "main"
+    ],
+    "files.trimTrailingWhitespace": true,
+    "roo-cline.allowedCommands": [
+        "npm test",
+        "npm install",
+        "tsc",
+        "git log",
+        "git diff",
+        "git show",
+        "*"
+    ]
+}

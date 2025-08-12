@@ -1,0 +1,84 @@
+{
+	"name": "ask_instructions",
+	"publisher": "0xdmc",
+	"displayName": "Copilot Chat Ask Instruction Tools",
+	"description": "",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/Microsoft/vscode-extension-samples"
+	},
+	"version": "0.1.0",
+	"engines": {
+		"vscode": "^1.100.0"
+	},
+	"categories": [
+		"AI",
+		"Chat"
+	],
+	"activationEvents": [],
+	"contributes": {
+		"languageModelTools": [
+			{
+				"name": "ask_follow_up_instructions",
+				"tags": [
+					"chat-tools-ask",
+					"chat-tools-sample"
+				],
+				"displayName": "Ask follow-up instructions",
+				"modelDescription": "Use to ask for follow-up instructions from user after finish a task. Return follow-up instructions from user",
+				"canBeReferencedInPrompt": true,
+				"toolReferenceName": "askFollowupInstructions",
+				"icon": "$(chat-sparkle)",
+				"userDescription": "Ask follow-up instructions",
+				"inputSchema": {
+					"type": "object",
+					"properties": {
+						"prompt": {
+							"type": "string",
+							"description": "The prompt/question to ask for follow-up instructions"
+						},
+						"follow_up": {
+							"type": "array",
+							"items": {
+								"type": "object",
+								"properties": {
+									"suggest": {
+										"type": "string",
+										"description": "Predefined suggestion"
+									}
+								},
+								"required": [
+									"suggest"
+								]
+							}
+						}
+					},
+					"required": [
+						"prompt",
+						"follow_up"
+					]
+				}
+			}
+		]
+	},
+	"main": "./out/extension.js",
+	"scripts": {
+		"vscode:prepublish": "npm run compile",
+		"compile": "tsc -p ./",
+		"lint": "eslint",
+		"watch": "tsc -watch -p ./"
+	},
+	"dependencies": {
+		"@vscode/chat-extension-utils": "^0.0.0-alpha.1",
+		"@vscode/prompt-tsx": "^0.3.0-alpha.12"
+	},
+	"devDependencies": {
+		"@eslint/js": "^9.13.0",
+		"@stylistic/eslint-plugin": "^2.9.0",
+		"@types/node": "^22",
+		"@types/vscode": "^1.100.0",
+		"eslint": "^9.13.0",
+		"typescript": "^5.9.2",
+		"typescript-eslint": "^8.39.0"
+	}
+}
