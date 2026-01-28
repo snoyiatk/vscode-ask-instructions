@@ -12,6 +12,7 @@ interface IFollowUp {
 }
 
 interface IAskFollowupInstructions {
+	sessionId: string;
 	prompt: string;
 	follow_up?: IFollowUp[];
 }
@@ -63,14 +64,22 @@ export class AskFollowupInstructionsTool implements vscode.LanguageModelTool<IAs
 			const tempFile = result ? false : true;
 			if (!result) {
 				const tmpFileName = `task-${Date.now()}-${Math.random().toString(36).substring(2, 9)}.md`;
-				result = `file:${path.join(os.tmpdir(), tmpFileName)}`;
+				// create file in current workspace or os.tmpdir()
+				const session = "session-" + _params.sessionId || "default";
+				const workDir = path.join(vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0
+					? vscode.workspace.workspaceFolders[0].uri.fsPath
+					: os.tmpdir(), session);
+				if (!fs.existsSync(workDir)) {
+					fs.mkdirSync(workDir, { recursive: true });
+				}
+				result = `file:${path.join(workDir, tmpFileName)}`;
 			}
 			if (result.startsWith("file:") || result.startsWith("/")) {
-				filePath =  result.replace("file:", "");
+				filePath = result.replace("file:", "");
 				const uri = vscode.Uri.file(filePath);
 				if (!fs.existsSync(filePath)) {
 					// vscode.workspace.fs.writeFile(uri, Buffer.from("## Task description\n"));
-					const defaultSuggestion = _params.follow_up?.map(a=>a.suggest).join("\n") || "";
+					const defaultSuggestion = _params.follow_up?.map(a => a.suggest).join("\n") || "";
 					fs.writeFileSync(filePath, `## Task description\n${_params.prompt}\n${defaultSuggestion}`);
 				}
 				try {
