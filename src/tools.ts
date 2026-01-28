@@ -61,18 +61,19 @@ export class AskFollowupInstructionsTool implements vscode.LanguageModelTool<IAs
 				// value: "instructions or file:PATH"
 			}, _token);
 			let filePath = null;
-			const tempFile = result ? false : true;
+			const genTaskFile = result ? false : true;
+			const genInWorkspace = genTaskFile && vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0;
 			if (!result) {
-				const tmpFileName = `task-${Date.now()}-${Math.random().toString(36).substring(2, 9)}.md`;
+				const taskFileName = `task-${Date.now()}-${Math.random().toString(36).substring(2, 9)}.md`;
 				// create file in current workspace or os.tmpdir()
-				const session = "session-" + _params.sessionId || "default";
-				const workDir = path.join(vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0
+				const session = ".vscode/session/" + _params.sessionId || "default";
+				const workDir = path.join(genInWorkspace
 					? vscode.workspace.workspaceFolders[0].uri.fsPath
 					: os.tmpdir(), session);
 				if (!fs.existsSync(workDir)) {
 					fs.mkdirSync(workDir, { recursive: true });
 				}
-				result = `file:${path.join(workDir, tmpFileName)}`;
+				result = `file:${path.join(workDir, taskFileName)}`;
 			}
 			if (result.startsWith("file:") || result.startsWith("/")) {
 				filePath = result.replace("file:", "");
@@ -92,7 +93,7 @@ export class AskFollowupInstructionsTool implements vscode.LanguageModelTool<IAs
 					result = fileContent;
 				} finally {
 					// Clean up temporary file
-					if (tempFile && fs.existsSync(filePath)) {
+					if (genTaskFile && !genInWorkspace && fs.existsSync(filePath)) {
 						try {
 							fs.unlinkSync(filePath);
 						} catch (cleanupError) {
