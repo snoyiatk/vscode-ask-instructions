@@ -67,7 +67,7 @@ export class AskFollowupInstructionsTool implements vscode.LanguageModelTool<IAs
 				const taskFileName = `task-${Date.now()}-${Math.random().toString(36).substring(2, 9)}.md`;
 				// create file in current workspace or os.tmpdir()
 				const session = ".vscode/session/" + _params.sessionId || "default";
-				const workDir = path.join(genInWorkspace
+				const workDir = path.join(vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0
 					? vscode.workspace.workspaceFolders[0].uri.fsPath
 					: os.tmpdir(), session);
 				if (!fs.existsSync(workDir)) {
