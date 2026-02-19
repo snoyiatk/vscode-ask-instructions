@@ -64,9 +64,14 @@ export class AskFollowupInstructionsTool implements vscode.LanguageModelTool<IAs
 			const genTaskFile = result ? false : true;
 			const genInWorkspace = genTaskFile && vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0;
 			if (!result) {
-				const taskFileName = `task-${Date.now()}-${Math.random().toString(36).substring(2, 9)}.md`;
+				const now = new Date();
+				const hhmm = now.getHours().toString().padStart(2, '0') + now.getMinutes().toString().padStart(2, '0');
+				const taskFileName = `task_${hhmm}_${Math.random().toString(36).substring(2, 9)}.md`;
 				// create file in current workspace or os.tmpdir()
-				const session = ".vscode/session/" + _params.sessionId || "default";
+				// Sanitize sessionId: strip non-alphanumeric chars (except hyphens/underscores) and apply fallback
+				const sanitizedSessionId = (_params.sessionId || "default").replace(/[^a-zA-Z0-9_-]/g, "_");
+				const dateStr = now.getFullYear() + '-' + (now.getMonth() + 1).toString().padStart(2, '0') + '-' + now.getDate().toString().padStart(2, '0');
+				const session = ".vscode/session/" + dateStr + "/" + sanitizedSessionId;
 				const workDir = path.join(vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0
 					? vscode.workspace.workspaceFolders[0].uri.fsPath
 					: os.tmpdir(), session);

@@ -7,7 +7,7 @@
 		"type": "git",
 		"url": "https://github.com/Microsoft/vscode-extension-samples"
 	},
-	"version": "0.2.1",
+	"version": "0.2.2",
 	"engines": {
 		"vscode": "^1.100.0"
 	},
@@ -35,7 +35,7 @@
 					"properties": {
 						"sessionId": {
 							"type": "string",
-							"description": "The id of current chat session"
+							"description": "A unique, stable identifier for the current conversation/chat session. Use the chat session ID or thread ID provided by the host (e.g. vscode chat session id). If no session ID is available, generate a deterministic slug from the conversation context (e.g. 'refactor-auth-module'). This value determines the folder where task files are stored (.vscode/session/<sessionId>/), so reuse the same ID across tool calls within one session to keep files grouped together."
 						},
 						"prompt": {
 							"type": "string",
