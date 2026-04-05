@@ -1,0 +1,26 @@
+{
+  "object_kind": "note",
+  "object_attributes": {
+    "noteable_type": "issue",
+    "action": "create",
+    "note": "/devagent:review debug webhook simulation"
+  },
+  "user": {
+    "username": "debug-user",
+    "name": "Debug User"
+  },
+  "provider": "github",
+  "event": "issue.comment.create",
+  "delivery": "hook-03e704bc-2418-4869-8ae2-f1916f3dc0c1-1775387386028",
+  "repository": {
+    "name": "vscode-ask-instructions",
+    "url": "https://github.com/snoyiatk/vscode-ask-instructions.git"
+  },
+  "project": {
+    "id": "03e704bc-2418-4869-8ae2-f1916f3dc0c1",
+    "name": "AI Coding",
+    "git_http_url": "https://github.com/snoyiatk/vscode-ask-instructions.git",
+    "http_url": "https://github.com/snoyiatk/vscode-ask-instructions.git"
+  },
+  "hookId": "03e704bc-2418-4869-8ae2-f1916f3dc0c1"
+}

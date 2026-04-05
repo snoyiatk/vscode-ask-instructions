@@ -27,6 +27,16 @@ Documentation can be found here:
 	- Run the extension in a new VS Code window
 	- You will see the @cat chat participant show in the GitHub Copilot Chat view
 
+## Webhook Simulation Debugging
+
+To review an issue-comment webhook payload (for example `/devagent:review ...`), run:
+
+```bash
+npm run review:webhook-simulation -- examples/issue-comment-webhook-debug.json
+```
+
+See [docs/webhook-simulation-review.md](docs/webhook-simulation-review.md) for details.
+
 ## About this sample
 
 This sample shows two different ways to build a chat participant in VS Code:
